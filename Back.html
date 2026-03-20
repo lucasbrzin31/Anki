@@ -1,0 +1,470 @@
+<!-- ============================================================
+     PRIMEIRO SCRIPT: DADOS E CONFIGURAÇÕES
+     ============================================================ -->
+<script>
+  var GLOSSARY_ORDER = [
+    /^CC-CEDICT.+$/, /^DrEye$/, /^Oxford$/, /^Wenlin ABC$/,
+    /^牛津英汉汉英词典$/, /^譯典通英漢雙向字典$/, /^500idioms$/,
+    /^中日大辞典　第二版$/, /^白水社中国語辞典$/,
+    /^ZH Wikipedia.+$/, /^康熙字典$/, /^MoEdict$/, /^Wunan$/,
+    /^Xiandai7$/, /^XiandaiGuifan$/, /^漢語大詞典$/,
+    /^兩岸詞典$/, /^辭源$/, /^EDHCC$/,
+  ]
+</script>
+<!-- ============================================================
+     EXPRESSION + PINYIN
+     ============================================================ -->
+<span lang="zh">
+  <a href="plecoapi://x-callback-url/s?q={{Expression}}&x-source=Anki&x-success=anki://" style="text-decoration: none; color: inherit;">
+    <div class="expression">{{Expression}}</div>
+  </a>
+
+  <div class="pinyin">{{Reading}}</div>
+
+  <!-- ============================================================
+       SENTENCE + IMAGE
+       ============================================================ -->
+  <div class="content-container">
+    {{#Sentence}}
+    <div class="sentence-container">
+      <a href="plecoapi://x-callback-url/s?q={{Sentence}}&x-source=Anki&x-success=anki://" style="text-decoration: none; color: inherit;">
+        <div class="sentence-text-wrapper">
+          <div class="sentence">
+            <span class="hanzi-version">{{Sentence}}</span>
+            <span class="ruby-version" style="display:none;">
+              {{#SentenceReading}}
+              {{furigana:SentenceReading}}
+              {{/SentenceReading}}
+              {{^SentenceReading}}
+              {{Sentence}}
+              {{/SentenceReading}}
+            </span>
+            <span class="ruby-tone-version" style="display:none;">
+              {{#SentenceReading}}
+              {{furigana:SentenceReading}}
+              {{/SentenceReading}}
+              {{^SentenceReading}}
+              {{Sentence}}
+              {{/SentenceReading}}
+            </span>
+          </div>
+          <!-- Tone legend — visible only in 調 mode -->
+          <div id="tone-legend" style="display:none;">
+            <span class="tone1">ā</span><span class="tone-label">1</span>
+            <span class="tone2">á</span><span class="tone-label">2</span>
+            <span class="tone3">ǎ</span><span class="tone-label">3</span>
+            <span class="tone4">à</span><span class="tone-label">4</span>
+            <span class="tone5">a</span><span class="tone-label">5</span>
+          </div>
+        </div>
+      </a>
+      {{#SentenceReading}}
+      <button id="sentence-toggle-button" class="sentence-toggle">字</button>
+      {{/SentenceReading}}
+    </div>
+    {{/Sentence}}
+
+    {{#Media}}
+    <div class="image-container">{{Media}}</div>
+    {{/Media}}
+  </div>
+
+  <!-- ============================================================
+       NOTES
+       ============================================================ -->
+  {{#Notes}}
+  <div class="notes-container">
+    <div class="notes-header">附注</div>
+    <div class="notes-content">{{Notes}}</div>
+  </div>
+  {{/Notes}}
+
+  <!-- ============================================================
+       GLOSSARY
+       ============================================================ -->
+  <div class="glossary-container">
+    <div class="glossary-header">
+      <span>意思</span>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div id="glossary" class="glossary-content collapsed">{{Glossary}}</div>
+  </div>
+
+  <!-- ============================================================
+       AUDIO
+       ============================================================ -->
+  <div class="audio-controls-container">
+    {{#Audio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{Audio}}</div>
+      <div class="audio-label">Word Audio</div>
+    </div>
+    {{/Audio}}
+    {{#CantoAudio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{CantoAudio}}</div>
+      <div class="audio-label">Cantonese</div>
+    </div>
+    {{/CantoAudio}}
+    {{#SentenceAudio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{SentenceAudio}}</div>
+      <div class="audio-label">Sentence Audio</div>
+    </div>
+    {{/SentenceAudio}}
+  </div>
+
+  <!-- ============================================================
+       SOURCE FOOTER
+       ============================================================ -->
+  <div class="source-footer">
+    {{#Source}}<div class="source-item">{{Source}}</div>{{/Source}}
+    <div id="source-link-container" class="source-item"></div>
+  </div>
+
+  <!-- ============================================================
+       LIGHTBOX
+       ============================================================ -->
+  <div id="lightbox" class="lightbox" onclick="hideLightbox()">
+    <span class="close-button">&times;</span>
+    <img class="lightbox-content" id="lightbox-img">
+  </div>
+</span>
+
+<!-- ============================================================
+     SEGUNDO SCRIPT: FUNÇÕES
+     ============================================================ -->
+<script>
+  // ============================================================
+  // GLOSSARY TOGGLE
+  // ============================================================
+  function toggleGlossary() {
+    const glossary = document.getElementById('glossary');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    if (glossary.classList.contains('collapsed')) {
+      glossary.classList.remove('collapsed');
+      toggleIcon.textContent = '▲';
+    } else {
+      glossary.classList.add('collapsed');
+      toggleIcon.textContent = '▼';
+    }
+  }
+  (() => {
+    const glossary = document.querySelector('.glossary-container');
+    if (glossary) glossary.addEventListener('click', toggleGlossary);
+  })();
+
+  // ============================================================
+  // LIGHTBOX
+  // ============================================================
+  function showLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+  }
+  function hideLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+  }
+  (() => {
+    document.querySelectorAll('.image-container img').forEach(img => {
+      img.addEventListener('click', () => showLightbox(img.src));
+    });
+  })();
+
+  // ============================================================
+  // AUDIO BUTTON SVG FIX
+  // ============================================================
+  (() => {
+    document.querySelectorAll('.audio-button svg').forEach(svg => {
+      svg.style.width = '30px';
+      svg.style.height = '30px';
+      const circle = svg.querySelector('circle');
+      if (circle) circle.setAttribute('fill', 'transparent');
+      const path = svg.querySelector('path');
+      if (path) path.setAttribute('fill', 'white');
+    });
+  })();
+
+  // ============================================================
+  // TONE DETECTION HELPER
+  // ============================================================
+  function getTone(syllable) {
+    if (/[āēīōūǖ]/.test(syllable)) return 1;
+    if (/[áéíóúǘ]/.test(syllable)) return 2;
+    if (/[ǎěǐǒǔǚ]/.test(syllable)) return 3;
+    if (/[àèìòùǜ]/.test(syllable)) return 4;
+    return 5;
+  }
+
+  // ============================================================
+  // PINYIN SYLLABLE SPLITTER HELPER
+  // ============================================================
+   function splitPinyinSyllables(text) {
+    if (!text) return [];
+    
+    // Remove espaços extras
+    text = text.trim();
+    
+    // Regex para capturar sílabas individuais
+    // Captura: consoante(s) opcionais + vogal com tom + possíveis terminações (ng, r)
+    const syllableRegex = /[bcdfghjklmnpqrstvwxyz]*[aeiouāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+(?:ng?|r)?/gi;
+    
+    const syllables = [];
+    let match;
+    
+    while ((match = syllableRegex.exec(text)) !== null) {
+      syllables.push(match[0]);
+    }
+    
+    // Se não encontrou sílabas, retorna o texto original dividido por espaços
+    if (syllables.length === 0) {
+      return text.split(/\s+/);
+    }
+    
+    return syllables;
+  }
+
+  // ============================================================
+  // EXPRESSION — SHOW ONLY SIMPLIFIED
+  // ============================================================
+  (() => {
+    function getSimpTradFromCCCEDICT() {
+      const headword = document.querySelector('[data-sc-cccedict]');
+      if (headword) {
+        const match = headword.textContent.match(/【(.+)・(.+)】/);
+        if (match) return match[2].trim();
+      }
+      return null;
+    }
+    const simplified = getSimpTradFromCCCEDICT();
+    if (simplified) {
+      document.querySelector('.expression').innerHTML =
+        `<span class="simplified">${simplified}</span>`;
+    }
+  })();
+
+  // ============================================================
+  // SENTENCE TOGGLE (字 → 注 → 調 → 字) + FILTER PINYIN + HIGHLIGHT
+  // ============================================================
+  (() => {
+    const expression = `{{Expression}}`;
+    const hanziVersion = document.querySelector('.sentence .hanzi-version');
+    const rubyVersion = document.querySelector('.sentence .ruby-version');
+    const rubyToneVersion = document.querySelector('.sentence .ruby-tone-version');
+    const toggleButton = document.getElementById('sentence-toggle-button');
+    const toneLegend = document.getElementById('tone-legend');
+
+    // Filter: extract only Chinese characters and punctuation
+    if (hanziVersion) {
+      const raw = hanziVersion.innerText || hanziVersion.textContent;
+      const chineseSegments = raw.match(/[\u4e00-\u9fff\u3400-\u4dbf\uff00-\uffef\u3000-\u303f，。！？、：；""''（）【】…—·\s]+/g);
+      if (chineseSegments) {
+        const result = chineseSegments.join('').trim();
+        if (result.length > 0) hanziVersion.textContent = result;
+      }
+    }
+
+    // Color rt tags in ruby-tone-version with per-syllable coloring
+    if (rubyToneVersion) {
+      rubyToneVersion.querySelectorAll('rt').forEach(rt => {
+        const text = rt.textContent.trim();
+        const syllables = splitPinyinSyllables(text);
+        rt.innerHTML = syllables
+          .map(s => `<span class="tone${getTone(s)}">${s}</span>`)
+          .join('');
+      });
+    }
+
+        // Função para destacar a palavra alvo em qualquer elemento
+    function highlightTargetWord(element, targetWord) {
+      if (!element || !targetWord) return;
+      
+      try {
+        const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Usa boundaries para não destacar dentro de palavras maiores
+        const regex = new RegExp(`(${escaped})`, 'g');
+        
+        const currentHtml = element.innerHTML;
+        element.innerHTML = currentHtml.replace(regex, '<span class="highlight-expression">$1</span>');
+      } catch (e) {
+        console.error("Error highlighting:", e);
+      }
+    }
+
+    // Função para destacar em elementos ruby (preservando a estrutura)
+    function highlightRubyWord(rubyEl, targetWord) {
+      if (!rubyEl || !targetWord) return;
+      
+      try {
+        // Procura por elementos que contêm o texto base
+        const rubies = rubyEl.querySelectorAll('ruby');
+        let modified = false;
+        
+        rubies.forEach(ruby => {
+          const baseText = ruby.childNodes[0]?.textContent || '';
+          if (baseText === targetWord) {
+            // Envolve o ruby inteiro com destaque
+            const parent = ruby.parentNode;
+            const span = document.createElement('span');
+            span.className = 'highlight-expression';
+            ruby.parentNode.replaceChild(span, ruby);
+            span.appendChild(ruby);
+            modified = true;
+          } else if (baseText.includes(targetWord)) {
+            // Caso o targetWord seja parte de uma palavra maior, não destaca
+            // (evita que "和" destaque "中华人民共和国")
+          }
+        });
+        
+        if (!modified) {
+          // Fallback: tenta por texto puro
+          const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`(${escaped})`, 'g');
+          const currentHtml = rubyEl.innerHTML;
+          rubyEl.innerHTML = currentHtml.replace(regex, '<span class="highlight-expression">$1</span>');
+        }
+      } catch (e) {
+        console.error("Error highlighting Ruby:", e);
+      }
+    }
+
+    // Aplica os destaques
+    if (expression && hanziVersion) {
+      highlightTargetWord(hanziVersion, expression);
+    }
+    
+    if (expression && rubyVersion) {
+      highlightRubyWord(rubyVersion, expression);
+    }
+    
+    if (expression && rubyToneVersion) {
+      highlightRubyWord(rubyToneVersion, expression);
+    }
+
+    // Show/hide with fade animation
+    function show(el) {
+      if (!el) return;
+      el.style.display = '';
+      el.classList.remove('sentence-fade');
+      void el.offsetWidth; // trigger reflow
+      el.classList.add('sentence-fade');
+    }
+    function hide(el) {
+      if (el) el.style.display = 'none';
+    }
+
+    // Setup toggle button: 字 → 注 → 調 → 字
+    if (!toggleButton || !hanziVersion || !rubyVersion) return;
+
+    let state = 'hanzi';
+
+    show(hanziVersion);
+    hide(rubyVersion);
+    hide(rubyToneVersion);
+    hide(toneLegend);
+    toggleButton.textContent = '字';
+
+    toggleButton.addEventListener('click', () => {
+      if (state === 'hanzi') {
+        hide(hanziVersion);
+        show(rubyVersion);
+        hide(rubyToneVersion);
+        hide(toneLegend);
+        toggleButton.textContent = '注';
+        state = 'ruby';
+      } else if (state === 'ruby') {
+        hide(hanziVersion);
+        hide(rubyVersion);
+        show(rubyToneVersion);
+        show(toneLegend);
+        toggleButton.textContent = '調';
+        state = 'tone';
+      } else {
+        show(hanziVersion);
+        hide(rubyVersion);
+        hide(rubyToneVersion);
+        hide(toneLegend);
+        toggleButton.textContent = '字';
+        state = 'hanzi';
+      }
+    });
+  })();
+
+  // ============================================================
+  // SOURCE LINK
+  // ============================================================
+  (() => {
+    const rawUrlData = `{{URL}}`;
+    const rawDocTitle = `{{DocumentTitle}}`;
+    const container = document.getElementById('source-link-container');
+    if (!rawUrlData || !container) {
+      if (container) container.innerText = rawDocTitle || '';
+      return;
+    }
+    let actualUrl = '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = rawUrlData.trim();
+    const anchor = tempDiv.querySelector('a');
+    if (anchor && anchor.href) {
+      actualUrl = anchor.href;
+    } else if (rawUrlData.trim().includes('://') || rawUrlData.trim().startsWith('/')) {
+      actualUrl = rawUrlData.trim();
+    }
+    const linkText = (rawDocTitle && rawDocTitle.trim()) ? rawDocTitle.trim() : actualUrl;
+    if (actualUrl && linkText) {
+      const link = document.createElement('a');
+      link.href = actualUrl;
+      link.textContent = linkText;
+      link.target = '_blank';
+      container.appendChild(link);
+    } else {
+      container.style.display = 'none';
+    }
+  })();
+
+  // ============================================================
+  // GLOSSARY ORDER
+  // ============================================================
+  (() => {
+    const div = document.querySelector('div.yomitan-glossary');
+    if (!div) return;
+    const ol = div.querySelector('ol');
+    if (!ol) return;
+    function getSortIndex(el) {
+      if (!el) return GLOSSARY_ORDER.length + 1;
+      if (el.firstElementChild && el.firstElementChild.querySelector('b')) return -1;
+      const name = el.getAttribute('data-dictionary');
+      if (!name) return GLOSSARY_ORDER.length;
+      const i = GLOSSARY_ORDER.findIndex(r => r.test(name));
+      return i === -1 ? GLOSSARY_ORDER.length : i;
+    }
+    const items = [...ol.children].sort((a, b) => getSortIndex(a) - getSortIndex(b));
+    ol.innerHTML = '';
+    items.forEach(item => ol.appendChild(item));
+  })();
+  
+    // ============================================================
+  // APLICAR CORES NO PINYIN PRINCIPAL (usando splitPinyinSyllables)
+  // ============================================================
+  (() => {
+    const pinyinDiv = document.querySelector('.pinyin');
+    if (!pinyinDiv) return;
+    
+    // Se já estiver colorido, não faz nada
+    if (pinyinDiv.querySelector('.tone1, .tone2, .tone3, .tone4, .tone5')) return;
+    
+    const text = pinyinDiv.textContent.trim();
+    if (!text) return;
+    
+    // Divide em sílabas usando a mesma função do ruby-tone-version
+    const syllables = splitPinyinSyllables(text);
+    if (syllables.length === 0) return;
+    
+    // Cria o HTML colorido SEM ESPAÇOS ENTRE AS SÍLABAS
+    const coloredHtml = syllables.map(syllable => {
+      const tone = getTone(syllable);
+      return `<span class="tone${tone}">${syllable}</span>`;
+    }).join('');  // <--- MUDOU DE join(' ') para join('')
+    
+    pinyinDiv.innerHTML = coloredHtml;
+  })();
+</script>
