@@ -1,6 +1,3 @@
-<!-- ============================================================
-     PRIMEIRO SCRIPT: DADOS E CONFIGURAÇÕES
-     ============================================================ -->
 <script>
   var GLOSSARY_ORDER = [
     /^CC-CEDICT.+$/, /^DrEye$/, /^Oxford$/, /^Wenlin ABC$/,
@@ -11,11 +8,13 @@
     /^兩岸詞典$/, /^辭源$/, /^EDHCC$/,
   ]
 </script>
+
 <!-- ============================================================
      EXPRESSION + PINYIN
      ============================================================ -->
 <span lang="zh">
-  <a href="plecoapi://x-callback-url/s?q={{Expression}}&x-source=Anki&x-success=anki://" style="text-decoration: none; color: inherit;">
+  <a href="plecoapi://x-callback-url/s?q={{Expression}}&x-source=Anki&x-success=anki://"
+    style="text-decoration: none; color: inherit;">
     <div class="expression">{{Expression}}</div>
   </a>
 
@@ -27,7 +26,8 @@
   <div class="content-container">
     {{#Sentence}}
     <div class="sentence-container">
-      <a href="plecoapi://x-callback-url/s?q={{Sentence}}&x-source=Anki&x-success=anki://" style="text-decoration: none; color: inherit;">
+      <a href="plecoapi://x-callback-url/s?q={{Sentence}}&x-source=Anki&x-success=anki://"
+        style="text-decoration: none; color: inherit;">
         <div class="sentence-text-wrapper">
           <div class="sentence">
             <span class="hanzi-version">{{Sentence}}</span>
@@ -131,9 +131,6 @@
   </div>
 </span>
 
-<!-- ============================================================
-     SEGUNDO SCRIPT: FUNÇÕES
-     ============================================================ -->
 <script>
   // ============================================================
   // GLOSSARY TOGGLE
@@ -198,29 +195,31 @@
   // ============================================================
   // PINYIN SYLLABLE SPLITTER HELPER
   // ============================================================
-   function splitPinyinSyllables(text) {
+  function splitPinyinSyllables(text) {
     if (!text) return [];
-    
-    // Remove espaços extras
     text = text.trim();
-    
-    // Regex para capturar sílabas individuais
-    // Captura: consoante(s) opcionais + vogal com tom + possíveis terminações (ng, r)
     const syllableRegex = /[bcdfghjklmnpqrstvwxyz]*[aeiouāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+(?:ng?|r)?/gi;
-    
     const syllables = [];
     let match;
-    
     while ((match = syllableRegex.exec(text)) !== null) {
       syllables.push(match[0]);
     }
-    
-    // Se não encontrou sílabas, retorna o texto original dividido por espaços
-    if (syllables.length === 0) {
-      return text.split(/\s+/);
-    }
-    
+    if (syllables.length === 0) return text.split(/\s+/);
     return syllables;
+  }
+
+  // ============================================================
+  // CLEAN RUBY RT — remove (ren²) and superscript numbers
+  // Applied only to ruby-tone-version
+  // ============================================================
+  function cleanRubyRt(rubyEl) {
+    if (!rubyEl) return;
+    rubyEl.querySelectorAll('rt').forEach(rt => {
+      let text = rt.textContent.trim();
+      text = text.replace(/\s*\([^)]*\)/g, '').trim();
+      text = text.replace(/[\d⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, '').trim();
+      rt.textContent = text;
+    });
   }
 
   // ============================================================
@@ -243,7 +242,7 @@
   })();
 
   // ============================================================
-  // SENTENCE TOGGLE (字 → 注 → 調 → 字) + FILTER PINYIN + HIGHLIGHT
+  // SENTENCE TOGGLE (字 → 注 → 調 → 字) + FILTER + HIGHLIGHT
   // ============================================================
   (() => {
     const expression = `{{Expression}}`;
@@ -253,17 +252,18 @@
     const toggleButton = document.getElementById('sentence-toggle-button');
     const toneLegend = document.getElementById('tone-legend');
 
-    // Filter: extract only Chinese characters and punctuation
+    // Filter: keep only Chinese characters and punctuation
     if (hanziVersion) {
       const raw = hanziVersion.innerText || hanziVersion.textContent;
-      const chineseSegments = raw.match(/[\u4e00-\u9fff\u3400-\u4dbf\uff00-\uffef\u3000-\u303f，。！？、：；""''（）【】…—·\s]+/g);
-      if (chineseSegments) {
-        const result = chineseSegments.join('').trim();
+      const segments = raw.match(/[\u4e00-\u9fff\u3400-\u4dbf\uff00-\uffef\u3000-\u303f，。！？、：；""''（）【】…—·]+/g);
+      if (segments) {
+        const result = segments.join('').trim();
         if (result.length > 0) hanziVersion.textContent = result;
       }
     }
 
-    // Color rt tags in ruby-tone-version with per-syllable coloring
+    // Clean and color ruby-tone-version
+    cleanRubyRt(rubyToneVersion);
     if (rubyToneVersion) {
       rubyToneVersion.querySelectorAll('rt').forEach(rt => {
         const text = rt.textContent.trim();
@@ -274,89 +274,63 @@
       });
     }
 
-        // Função para destacar a palavra alvo em qualquer elemento
+    // Highlight target word in hanzi version
     function highlightTargetWord(element, targetWord) {
       if (!element || !targetWord) return;
-      
       try {
         const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Usa boundaries para não destacar dentro de palavras maiores
-        const regex = new RegExp(`(${escaped})`, 'g');
-        
-        const currentHtml = element.innerHTML;
-        element.innerHTML = currentHtml.replace(regex, '<span class="highlight-expression">$1</span>');
-      } catch (e) {
-        console.error("Error highlighting:", e);
-      }
+        element.innerHTML = element.innerHTML.replace(
+          new RegExp(`(${escaped})`, 'g'),
+          '<span class="highlight-expression">$1</span>'
+        );
+      } catch (e) { console.error("Error highlighting:", e); }
     }
 
-    // Função para destacar em elementos ruby (preservando a estrutura)
+    // Highlight target word in ruby version
     function highlightRubyWord(rubyEl, targetWord) {
       if (!rubyEl || !targetWord) return;
-      
       try {
-        // Procura por elementos que contêm o texto base
         const rubies = rubyEl.querySelectorAll('ruby');
         let modified = false;
-        
         rubies.forEach(ruby => {
           const baseText = ruby.childNodes[0]?.textContent || '';
           if (baseText === targetWord) {
-            // Envolve o ruby inteiro com destaque
-            const parent = ruby.parentNode;
             const span = document.createElement('span');
             span.className = 'highlight-expression';
             ruby.parentNode.replaceChild(span, ruby);
             span.appendChild(ruby);
             modified = true;
-          } else if (baseText.includes(targetWord)) {
-            // Caso o targetWord seja parte de uma palavra maior, não destaca
-            // (evita que "和" destaque "中华人民共和国")
           }
         });
-        
         if (!modified) {
-          // Fallback: tenta por texto puro
           const escaped = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`(${escaped})`, 'g');
-          const currentHtml = rubyEl.innerHTML;
-          rubyEl.innerHTML = currentHtml.replace(regex, '<span class="highlight-expression">$1</span>');
+          rubyEl.innerHTML = rubyEl.innerHTML.replace(
+            new RegExp(`(${escaped})`, 'g'),
+            '<span class="highlight-expression">$1</span>'
+          );
         }
-      } catch (e) {
-        console.error("Error highlighting Ruby:", e);
-      }
+      } catch (e) { console.error("Error highlighting Ruby:", e); }
     }
 
-    // Aplica os destaques
-    if (expression && hanziVersion) {
-      highlightTargetWord(hanziVersion, expression);
-    }
-    
-    if (expression && rubyVersion) {
-      highlightRubyWord(rubyVersion, expression);
-    }
-    
-    if (expression && rubyToneVersion) {
-      highlightRubyWord(rubyToneVersion, expression);
-    }
+    if (expression && hanziVersion) highlightTargetWord(hanziVersion, expression);
+    if (expression && rubyVersion) highlightRubyWord(rubyVersion, expression);
+    if (expression && rubyToneVersion) highlightRubyWord(rubyToneVersion, expression);
 
     // Show/hide with fade animation
     function show(el) {
       if (!el) return;
       el.style.display = '';
       el.classList.remove('sentence-fade');
-      void el.offsetWidth; // trigger reflow
+      void el.offsetWidth;
       el.classList.add('sentence-fade');
     }
     function hide(el) {
       if (el) el.style.display = 'none';
     }
 
-    // Setup toggle button: 字 → 注 → 調 → 字
     if (!toggleButton || !hanziVersion || !rubyVersion) return;
 
     let state = 'hanzi';
-
     show(hanziVersion);
     hide(rubyVersion);
     hide(rubyToneVersion);
@@ -441,30 +415,21 @@
     ol.innerHTML = '';
     items.forEach(item => ol.appendChild(item));
   })();
-  
-    // ============================================================
-  // APLICAR CORES NO PINYIN PRINCIPAL (usando splitPinyinSyllables)
+
+  // ============================================================
+  // PINYIN PRINCIPAL — COLOR TONES
   // ============================================================
   (() => {
     const pinyinDiv = document.querySelector('.pinyin');
     if (!pinyinDiv) return;
-    
-    // Se já estiver colorido, não faz nada
     if (pinyinDiv.querySelector('.tone1, .tone2, .tone3, .tone4, .tone5')) return;
-    
-    const text = pinyinDiv.textContent.trim();
+    let text = pinyinDiv.textContent.trim();
+    text = text.replace(/\s*\([^)]*\)/g, '').trim();
     if (!text) return;
-    
-    // Divide em sílabas usando a mesma função do ruby-tone-version
     const syllables = splitPinyinSyllables(text);
     if (syllables.length === 0) return;
-    
-    // Cria o HTML colorido SEM ESPAÇOS ENTRE AS SÍLABAS
-    const coloredHtml = syllables.map(syllable => {
-      const tone = getTone(syllable);
-      return `<span class="tone${tone}">${syllable}</span>`;
-    }).join('');  // <--- MUDOU DE join(' ') para join('')
-    
-    pinyinDiv.innerHTML = coloredHtml;
+    pinyinDiv.innerHTML = syllables
+      .map(s => `<span class="tone${getTone(s)}">${s}</span>`)
+      .join('');
   })();
 </script>
