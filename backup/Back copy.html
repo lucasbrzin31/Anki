@@ -1,0 +1,402 @@
+<!-- ============================================================
+     GLOSSARY ORDER CONFIG
+     ============================================================ -->
+<script>
+  var GLOSSARY_ORDER = [
+    /^CC-CEDICT.+$/, /^DrEye$/, /^Oxford$/, /^Wenlin ABC$/,
+    /^牛津英汉汉英词典$/, /^譯典通英漢雙向字典$/, /^500idioms$/,
+    /^中日大辞典　第二版$/, /^白水社中国語辞典$/,
+    /^ZH Wikipedia.+$/, /^康熙字典$/, /^MoEdict$/, /^Wunan$/,
+    /^Xiandai7$/, /^XiandaiGuifan$/, /^漢語大詞典$/,
+    /^兩岸詞典$/, /^辭源$/, /^EDHCC$/,
+  ]
+</script>
+
+<span lang="zh">
+
+  <!-- ============================================================
+       EXPRESSION
+       ============================================================ -->
+  <a href="plecoapi://x-callback-url/s?q={{Expression}}&x-source=Anki&x-success=anki://"
+    style="text-decoration: none; color: inherit;">
+    <div class="expression">{{Expression}}</div>
+  </a>
+
+  <!-- ============================================================
+       PINYIN
+       ============================================================ -->
+  <div class="pinyin">{{Reading}}</div>
+
+  <!-- ============================================================
+       RADICAL INFO
+       ============================================================ -->
+  <div id="radical-info"></div>
+
+  <!-- ============================================================
+       SENTENCE + IMAGE
+       ============================================================ -->
+  <div class="content-container">
+
+    {{#Sentence}}
+    <div class="sentence-container">
+      <a href="plecoapi://x-callback-url/s?q={{Sentence}}&x-source=Anki&x-success=anki://"
+        style="text-decoration: none; color: inherit;">
+        <div class="sentence-text-wrapper">
+          <div class="sentence">
+            <span class="hanzi-version">{{Sentence}}</span>
+            <span class="ruby-version" style="display:none;">
+              {{#SentenceReading}}{{furigana:SentenceReading}}{{/SentenceReading}}{{^SentenceReading}}{{Sentence}}{{/SentenceReading}}
+            </span>
+            <span class="ruby-tone-version" style="display:none;">
+              {{#SentenceReading}}{{furigana:SentenceReading}}{{/SentenceReading}}{{^SentenceReading}}{{Sentence}}{{/SentenceReading}}
+            </span>
+          </div>
+          <div id="tone-legend" style="display:none;">
+            <span class="tone1">ā</span><span class="tone-label">1</span>
+            <span class="tone2">á</span><span class="tone-label">2</span>
+            <span class="tone3">ǎ</span><span class="tone-label">3</span>
+            <span class="tone4">à</span><span class="tone-label">4</span>
+            <span class="tone5">a</span><span class="tone-label">5</span>
+          </div>
+        </div>
+      </a>
+      {{#SentenceReading}}<button id="sentence-toggle-button" class="sentence-toggle">字</button>{{/SentenceReading}}
+    </div>
+    {{/Sentence}}
+
+    {{#Media}}<div class="image-container">{{Media}}</div>{{/Media}}
+
+  </div>
+
+  <!-- ============================================================
+       NOTES
+       ============================================================ -->
+  {{#Notes}}
+  <div class="notes-container">
+    <div class="notes-header">附注</div>
+    <div class="notes-content">{{Notes}}</div>
+  </div>
+  {{/Notes}}
+
+  <!-- ============================================================
+       GLOSSARY
+       ============================================================ -->
+  <div class="glossary-container">
+    <div class="glossary-header">
+      <span>意思</span>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div id="glossary" class="glossary-content collapsed">{{Glossary}}</div>
+  </div>
+
+  <!-- ============================================================
+       AUDIO
+       ============================================================ -->
+  <div class="audio-controls-container">
+    {{#Audio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{Audio}}</div>
+      <div class="audio-label">Word Audio</div>
+    </div>
+    {{/Audio}}
+    {{#CantoAudio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{CantoAudio}}</div>
+      <div class="audio-label">Cantonese</div>
+    </div>
+    {{/CantoAudio}}
+    {{#SentenceAudio}}
+    <div class="audio-button-container">
+      <div class="audio-button">{{SentenceAudio}}</div>
+      <div class="audio-label">Sentence Audio</div>
+    </div>
+    {{/SentenceAudio}}
+  </div>
+
+  <!-- ============================================================
+       SOURCE FOOTER
+       ============================================================ -->
+  <div class="source-footer">
+    {{#Source}}<div class="source-item">{{Source}}</div>{{/Source}}
+    <div id="source-link-container" class="source-item"></div>
+  </div>
+
+  <!-- ============================================================
+       LIGHTBOX
+       ============================================================ -->
+  <div id="lightbox" class="lightbox" onclick="hideLightbox()">
+    <span class="close-button">&times;</span>
+    <img class="lightbox-content" id="lightbox-img">
+  </div>
+
+</span>
+
+<!-- ============================================================
+     SCRIPTS COMPLETO
+     ============================================================ -->
+<script>
+
+  // GLOSSARY TOGGLE
+  function toggleGlossary() {
+    const glossary = document.getElementById('glossary');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    if (glossary.classList.contains('collapsed')) {
+      glossary.classList.remove('collapsed');
+      toggleIcon.textContent = '▲';
+    } else {
+      glossary.classList.add('collapsed');
+      toggleIcon.textContent = '▼';
+    }
+  }
+  (() => { const g = document.querySelector('.glossary-container'); if (g) g.addEventListener('click', toggleGlossary); })();
+
+  // LIGHTBOX
+  function showLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+  }
+  function hideLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+  }
+  (() => { document.querySelectorAll('.image-container img').forEach(img => img.addEventListener('click', () => showLightbox(img.src))); })();
+
+  // AUDIO SVG FIX
+  (() => {
+    document.querySelectorAll('.audio-button svg').forEach(svg => {
+      svg.style.width = '30px';
+      svg.style.height = '30px';
+      const c = svg.querySelector('circle'); if (c) c.setAttribute('fill', 'transparent');
+      const p = svg.querySelector('path'); if (p) p.setAttribute('fill', 'white');
+    });
+  })();
+
+  // HELPERS
+  function getTone(s) {
+    if (/[āēīōūǖ]/.test(s)) return 1;
+    if (/[áéíóúǘ]/.test(s)) return 2;
+    if (/[ǎěǐǒǔǚ]/.test(s)) return 3;
+    if (/[àèìòùǜ]/.test(s)) return 4;
+    return 5;
+  }
+  function splitPinyinSyllables(text) {
+    if (!text) return [];
+    text = text.trim();
+    const regex = /[bcdfghjklmnpqrstvwxyz]*[aeiouāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+(?:ng?|r)?/gi;
+    const syllables = [];
+    let match;
+    while ((match = regex.exec(text)) !== null) syllables.push(match[0]);
+    return syllables.length ? syllables : text.split(/\s+/);
+  }
+  function cleanRubyRt(rubyEl) {
+    if (!rubyEl) return;
+    rubyEl.querySelectorAll('rt').forEach(rt => {
+      let t = rt.textContent.trim();
+      t = t.replace(/\s*\([^)]*\)/g, '').trim();
+      t = t.replace(/[\d⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, '').trim();
+      rt.textContent = t;
+    });
+  }
+
+  // EXPRESSION — Simplified only
+  (() => {
+    const head = document.querySelector('[data-sc-cccedict]');
+    if (head) {
+      const m = head.textContent.match(/【(.+)・(.+)】/);
+      if (m) document.querySelector('.expression').innerHTML = `<span class="simplified">${m[2].trim()}</span>`;
+    }
+  })();
+
+  // SENTENCE TOGGLE + HIGHLIGHT
+  (() => {
+    const expression = `{{Expression}}`;
+    const hanzi = document.querySelector('.hanzi-version');
+    const ruby = document.querySelector('.ruby-version');
+    const rubyTone = document.querySelector('.ruby-tone-version');
+    const btn = document.getElementById('sentence-toggle-button');
+    const legend = document.getElementById('tone-legend');
+
+    if (hanzi) {
+      const raw = hanzi.textContent;
+      const seg = raw.match(/[\u4e00-\u9fff\u3400-\u4dbf\uff00-\uffef\u3000-\u303f，。！？、：；""''（）【】…—·]+/g);
+      if (seg) hanzi.textContent = seg.join('').trim();
+    }
+
+    cleanRubyRt(rubyTone);
+    if (rubyTone) {
+      rubyTone.querySelectorAll('rt').forEach(rt => {
+        const syllables = splitPinyinSyllables(rt.textContent);
+        rt.innerHTML = syllables.map(s => `<span class="tone${getTone(s)}">${s}</span>`).join('');
+      });
+    }
+
+    function highlight(el, word) {
+      if (!el || !word) return;
+      const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      el.innerHTML = el.innerHTML.replace(new RegExp(`(${esc})`, 'g'), '<span class="highlight-expression">$1</span>');
+    }
+    if (expression) {
+      if (hanzi) highlight(hanzi, expression);
+      if (ruby) highlight(ruby, expression);
+      if (rubyTone) highlight(rubyTone, expression);
+    }
+
+    if (!btn) return;
+    let state = 'hanzi';
+    const show = el => { if (el) { el.style.display = ''; el.classList.add('sentence-fade'); } };
+    const hide = el => { if (el) el.style.display = 'none'; };
+
+    show(hanzi); hide(ruby); hide(rubyTone); hide(legend);
+    btn.textContent = '字';
+
+    btn.addEventListener('click', () => {
+      if (state === 'hanzi') { hide(hanzi); show(ruby); btn.textContent = '注'; state = 'ruby'; }
+      else if (state === 'ruby') { hide(ruby); show(rubyTone); show(legend); btn.textContent = '調'; state = 'tone'; }
+      else { show(hanzi); hide(ruby); hide(rubyTone); hide(legend); btn.textContent = '字'; state = 'hanzi'; }
+    });
+  })();
+
+  // SOURCE LINK
+  (() => {
+    const url = `{{URL}}`;
+    const title = `{{DocumentTitle}}`;
+    const container = document.getElementById('source-link-container');
+    if (!url || !container) { if (container) container.textContent = title || ''; return; }
+    let actual = '';
+    const div = document.createElement('div');
+    div.innerHTML = url.trim();
+    const a = div.querySelector('a');
+    if (a && a.href) actual = a.href;
+    else if (url.trim().includes('://') || url.trim().startsWith('/')) actual = url.trim();
+    const txt = title && title.trim() ? title.trim() : actual;
+    if (actual && txt) {
+      const link = document.createElement('a');
+      link.href = actual; link.textContent = txt; link.target = '_blank';
+      container.appendChild(link);
+    } else container.style.display = 'none';
+  })();
+
+  // GLOSSARY ORDER
+  (() => {
+    const div = document.querySelector('div.yomitan-glossary');
+    if (!div) return;
+    const ol = div.querySelector('ol');
+    if (!ol) return;
+    function idx(el) {
+      if (!el) return GLOSSARY_ORDER.length + 1;
+      if (el.firstElementChild && el.firstElementChild.querySelector('b')) return -1;
+      const name = el.getAttribute('data-dictionary');
+      if (!name) return GLOSSARY_ORDER.length;
+      const i = GLOSSARY_ORDER.findIndex(r => r.test(name));
+      return i === -1 ? GLOSSARY_ORDER.length : i;
+    }
+    const items = [...ol.children].sort((a, b) => idx(a) - idx(b));
+    ol.innerHTML = '';
+    items.forEach(i => ol.appendChild(i));
+  })();
+
+  // PINYIN COLOR
+  (() => {
+    const p = document.querySelector('.pinyin');
+    if (!p || p.querySelector('.tone1')) return;
+    let t = p.textContent.trim().replace(/\s*\([^)]*\)/g, '').trim();
+    if (!t) return;
+    const syl = splitPinyinSyllables(t);
+    p.innerHTML = syl.map(s => `<span class="tone${getTone(s)}">${s}</span>`).join('');
+  })();
+
+  // ============================================================
+  // RADICAL INFO — SCRIPT COMPLETO (com CDN temporário)
+  // ============================================================
+  (() => {
+    const RADICALS_PT = {
+      '一': ['1', 'um'], '丨': ['2', 'linha vertical'], '丶': ['3', 'ponto'], '丿': ['4', 'traço'], '乙': ['5', 'gancho'],
+      '亅': ['6', 'gancho'], '二': ['7', 'dois'], '亠': ['8', 'tampa'], '人': ['9', 'pessoa'], '儿': ['10', 'pernas'],
+      '入': ['11', 'entrar'], '八': ['12', 'oito'], '冂': ['13', 'moldura'], '冖': ['14', 'cobertura'], '冫': ['15', 'gelo'],
+      '几': ['16', 'mesa'], '凵': ['17', 'recipiente'], '刀': ['18', 'faca'], '力': ['19', 'força'], '勹': ['20', 'embrulho'],
+      '匕': ['21', 'colher'], '匚': ['22', 'caixa'], '匸': ['23', 'esconder'], '十': ['24', 'dez'], '卜': ['25', 'adivinhação'],
+      '卩': ['26', 'selo'], '厂': ['27', 'penhasco'], '厶': ['28', 'privado'], '又': ['29', 'mão direita'], '口': ['30', 'boca'],
+      '囗': ['31', 'cercado'], '土': ['32', 'terra'], '士': ['33', 'erudito'], '夂': ['34', 'seguir'], '夊': ['35', 'andar devagar'],
+      '夕': ['36', 'noite'], '大': ['37', 'grande'], '女': ['38', 'mulher'], '子': ['39', 'filho'], '宀': ['40', 'teto'],
+      '寸': ['41', 'polegada'], '小': ['42', 'pequeno'], '尢': ['43', 'coxo'], '尸': ['44', 'corpo'], '屮': ['45', 'broto'],
+      '山': ['46', 'montanha'], '巛': ['47', 'rio'], '工': ['48', 'trabalho'], '己': ['49', 'eu mesmo'], '巾': ['50', 'toalha'],
+      '干': ['51', 'seco'], '幺': ['52', 'pequenino'], '广': ['53', 'abrigo'], '廴': ['54', 'caminhar'], '廾': ['55', 'mãos juntas'],
+      '弋': ['56', 'estaca'], '弓': ['57', 'arco'], '彐': ['58', 'focinho'], '彡': ['59', 'pelos'], '彳': ['60', 'passo'],
+      '心': ['61', 'coração'], '戈': ['62', 'lança'], '戸': ['63', 'porta'], '手': ['64', 'mão'], '支': ['65', 'ramo'],
+      '攴': ['66', 'bater'], '文': ['67', 'texto'], '斗': ['68', 'concha'], '斤': ['69', 'machado'], '方': ['70', 'quadrado'],
+      '无': ['71', 'sem'], '日': ['72', 'sol'], '曰': ['73', 'dizer'], '月': ['74', 'lua'], '木': ['75', 'madeira'],
+      '欠': ['76', 'bocejo'], '止': ['77', 'parar'], '歹': ['78', 'morto'], '殳': ['79', 'arma'], '毋': ['80', 'não'],
+      '比': ['81', 'comparar'], '毛': ['82', 'pelo'], '氏': ['83', 'clã'], '气': ['84', 'vapor'], '水': ['85', 'água'],
+      '火': ['86', 'fogo'], '爪': ['87', 'garra'], '父': ['88', 'pai'], '爻': ['89', 'linhas'], '爿': ['90', 'placa'],
+      '片': ['91', 'fatia'], '牙': ['92', 'dente'], '牛': ['93', 'boi'], '犬': ['94', 'cão'], '玄': ['95', 'escuro'],
+      '玉': ['96', 'jade'], '瓜': ['97', 'melão'], '瓦': ['98', 'telha'], '甘': ['99', 'doce'], '生': ['100', 'nascer'],
+      '用': ['101', 'usar'], '田': ['102', 'campo'], '疋': ['103', 'rolo'], '疒': ['104', 'doença'], '癶': ['105', 'subir'],
+      '白': ['106', 'branco'], '皮': ['107', 'pele'], '皿': ['108', 'prato'], '目': ['109', 'olho'], '矛': ['110', 'lança'],
+      '矢': ['111', 'flecha'], '石': ['112', 'pedra'], '示': ['113', 'mostrar'], '禸': ['114', 'pegada'], '禾': ['115', 'grão'],
+      '穴': ['116', 'caverna'], '立': ['117', 'ficar em pé'], '竹': ['118', 'bambu'], '米': ['119', 'arroz'], '糸': ['120', 'seda'],
+      '缶': ['121', 'jarro'], '网': ['122', 'rede'], '羊': ['123', 'ovelha'], '羽': ['124', 'pena'], '老': ['125', 'velho'],
+      '而': ['126', 'e ainda'], '耒': ['127', 'arado'], '耳': ['128', 'ouvido'], '聿': ['129', 'pincel'], '肉': ['130', 'carne'],
+      '臣': ['131', 'ministro'], '自': ['132', 'eu mesmo'], '至': ['133', 'chegar'], '臼': ['134', 'almofariz'], '舌': ['135', 'língua'],
+      '舛': ['136', 'oposto'], '舟': ['137', 'barco'], '艮': ['138', 'resistir'], '色': ['139', 'cor'], '艸': ['140', 'grama'],
+      '虍': ['141', 'tigre'], '虫': ['142', 'inseto'], '血': ['143', 'sangue'], '行': ['144', 'andar'], '衣': ['145', 'roupa'],
+      '襾': ['146', 'cobrir'], '見': ['147', 'ver'], '角': ['148', 'chifre'], '言': ['149', 'palavra'], '谷': ['150', 'vale'],
+      '豆': ['151', 'feijão'], '豕': ['152', 'porco'], '豸': ['153', 'animal'], '貝': ['154', 'concha'], '赤': ['155', 'vermelho'],
+      '走': ['156', 'correr'], '足': ['157', 'pé'], '身': ['158', 'corpo'], '車': ['159', 'veículo'], '辛': ['160', 'amargo'],
+      '辰': ['161', 'hora'], '辵': ['162', 'andar'], '邑': ['163', 'cidade'], '酉': ['164', 'jarro'], '釆': ['165', 'distinguir'],
+      '里': ['166', 'aldeia'], '金': ['167', 'metal'], '長': ['168', 'longo'], '門': ['169', 'portão'], '阜': ['170', 'colina'],
+      '隶': ['171', 'alcançar'], '隹': ['172', 'pássaro'], '雨': ['173', 'chuva'], '青': ['174', 'azul-verde'], '非': ['175', 'não'],
+      '面': ['176', 'rosto'], '革': ['177', 'couro'], '韋': ['178', 'curtido'], '韭': ['179', 'alho-poró'], '音': ['180', 'som'],
+      '頁': ['181', 'página'], '風': ['182', 'vento'], '飛': ['183', 'voar'], '食': ['184', 'comer'], '首': ['185', 'cabeça'],
+      '香': ['186', 'perfume'], '馬': ['187', 'cavalo'], '骨': ['188', 'osso'], '高': ['189', 'alto'], '髟': ['190', 'cabelo'],
+      '鬥': ['191', 'lutar'], '鬯': ['192', 'perfume'], '鬲': ['193', 'caldeirão'], '鬼': ['194', 'fantasma'], '魚': ['195', 'peixe'],
+      '鳥': ['196', 'pássaro'], '鹵': ['197', 'sal'], '鹿': ['198', 'veado'], '麥': ['199', 'trigo'], '麻': ['200', 'cânhamo'],
+      '黃': ['201', 'amarelo'], '黍': ['202', 'painço'], '黑': ['203', 'preto'], '黹': ['204', 'bordar'], '黽': ['205', 'sapo'],
+      '鼎': ['206', 'caldeirão'], '鼓': ['207', 'tambor'], '鼠': ['208', 'rato'], '鼻': ['209', 'nariz'], '齊': ['210', 'uniforme'],
+      '齒': ['211', 'dente'], '龍': ['212', 'dragão'], '龜': ['213', 'tartaruga'], '龠': ['214', 'flauta'],
+      // Simplified
+      '讠': ['149', 'palavra'], '纟': ['120', 'seda'], '饣': ['184', 'comer'], '马': ['187', 'cavalo'], '鱼': ['195', 'peixe'],
+      '鸟': ['196', 'pássaro'], '贝': ['154', 'concha'], '见': ['147', 'ver'], '车': ['159', 'veículo'], '门': ['169', 'portão'],
+      '风': ['182', 'vento'], '飞': ['183', 'voar'], '齿': ['211', 'dente'], '龙': ['212', 'dragão'], '龟': ['213', 'tartaruga'],
+      '钅': ['167', 'metal'], '氵': ['85', 'água'], '忄': ['61', 'coração'], '扌': ['64', 'mão'], '艹': ['140', 'grama'],
+      '犭': ['94', 'cão'], '礻': ['113', 'mostrar'], '衤': ['145', 'roupa'], '阝': ['163', 'cidade'], '刂': ['18', 'faca'],
+    };
+
+    const expression = `{{Expression}}`;
+    const hanziChars = [...expression].filter(c => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(c));
+    if (hanziChars.length === 0) return;
+
+    window._hanziData = {};
+
+    function displayRadicals() {
+      const container = document.getElementById('radical-info');
+      if (!container) return;
+
+      const parts = hanziChars.map(char => {
+        const data = window._hanziData[char];
+        if (!data || !data.radical) return '';
+        const rad = data.radical;
+        const info = RADICALS_PT[rad];
+        if (!info) return '';
+        return `<span class="radical-item"><span class="radical-char">${rad}</span><span class="radical-meaning">${info[1]}</span></span>`;
+      }).filter(Boolean);
+
+      container.innerHTML = parts.length ? parts.join('') : '<span style="color:#aaa;font-style:italic;">Nenhum radical encontrado</span>';
+    }
+
+    // CDN temporário (para funcionar AGORA)
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js';
+    script.onload = () => {
+      let loaded = 0;
+      hanziChars.forEach(char => {
+        HanziWriter.loadCharacterData(char)
+          .then(data => {
+            window._hanziData[char] = data;
+            loaded++;
+            if (loaded === hanziChars.length) displayRadicals();
+          })
+          .catch(() => loaded++);
+      });
+    };
+    document.head.appendChild(script);
+  })();
+</script>
