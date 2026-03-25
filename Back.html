@@ -91,25 +91,28 @@
   </div>
 
   <!-- ============================================================
-       AUDIO
-       ============================================================ -->
+     AUDIO
+     ============================================================ -->
   <div class="audio-controls-container">
     {{#Audio}}
     <div class="audio-button-container">
       <div class="audio-button">{{Audio}}</div>
-      <div class="audio-label">Word Audio</div>
+      <div class="audio-label">Áudio da Palavra</div>
     </div>
     {{/Audio}}
-    {{#CantoAudio}}
+
+    {{#SentenceAudio2}}
     <div class="audio-button-container">
-      <div class="audio-button">{{CantoAudio}}</div>
-      <div class="audio-label">Cantonese</div>
+      <div class="audio-button">{{SentenceAudio2}}</div>
+      <div class="audio-label">Áudio da Frase</div>
     </div>
-    {{/CantoAudio}}
+    {{/SentenceAudio2}}
+
+    <!-- (opcional) se ainda quiser manter o antigo SentenceAudio -->
     {{#SentenceAudio}}
     <div class="audio-button-container">
       <div class="audio-button">{{SentenceAudio}}</div>
-      <div class="audio-label">Sentence Audio</div>
+      <div class="audio-label">Áudio Antigo</div>
     </div>
     {{/SentenceAudio}}
   </div>
@@ -252,6 +255,9 @@
     const toggleButton = document.getElementById('sentence-toggle-button');
     const toneLegend = document.getElementById('tone-legend');
 
+    // Regex de sílabas (usado para colorir preservando espaços)
+    const syllableRegex = /[bcdfghjklmnpqrstvwxyz]*[aeiouāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+(?:ng?|r)?/gi;
+
     // Filter: keep only Chinese characters and punctuation
     if (hanziVersion) {
       const raw = hanziVersion.innerText || hanziVersion.textContent;
@@ -262,15 +268,19 @@
       }
     }
 
-    // Clean and color ruby-tone-version
+    // Clean and color ruby-tone-version (AGORA PRESERVA OS ESPAÇOS!)
     cleanRubyRt(rubyToneVersion);
     if (rubyToneVersion) {
       rubyToneVersion.querySelectorAll('rt').forEach(rt => {
-        const text = rt.textContent.trim();
-        const syllables = splitPinyinSyllables(text);
-        rt.innerHTML = syllables
-          .map(s => `<span class="tone${getTone(s)}">${s}</span>`)
-          .join('');
+        let text = rt.textContent.trim();
+
+        // Substitui sílaba por sílaba colorida, mas mantendo todos os espaços originais
+        const coloredHTML = text.replace(syllableRegex, (match) => {
+          const tone = getTone(match);
+          return `<span class="tone${tone}">${match}</span>`;
+        });
+
+        rt.innerHTML = coloredHTML;
       });
     }
 
